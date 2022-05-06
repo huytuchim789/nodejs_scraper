@@ -52,7 +52,7 @@ const getProducts = async (req, res) => {
 
 const tikiProducts = async (req, res) => {
   const browser = await puppeteer.launch({
-    headless: false,
+    headless: true,
     args: ['--disable-setuid-sandbox'],
     ignoreHTTPSErrors: true,
   })
