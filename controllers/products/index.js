@@ -77,15 +77,13 @@ const tikiProducts = async (req, res) => {
   const productName = req.query.product
 
   await page.goto(`https://tiki.vn/search?q=${queryString.escape(productName)}`)
-  await page.screenshot({ path: 'cherchertech-iphoneX.png' })
-  for (let i = 0; i < 1; i++) {
-    await scrollPageToBottom(page, {
-      size: 500,
-      delay: 2000,
-    })
-  }
+  // await page.screenshot({ path: 'cherchertech-iphoneX.png' })
+  await scrollPageToBottom(page, {
+    size: 500,
+    delay: 600,
+  })
+
   // await scroll(page)
-  await page.waitForTimeout(3000)
   // const datas = await getData(page)
   // // await browser.close()
   const datas = await getDataTiki(page)
