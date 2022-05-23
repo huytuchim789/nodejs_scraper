@@ -13,7 +13,9 @@ const getProducts = async (req, res) => {
   })
   const page = await browser.newPage()
   await page.goto(
-    `https://gearvn.com/collections/${queryString.escape(productName)}`
+    `https://gearvn.com/search?type=product&q=filter=((title%3Aproduct%20adjacent%20${queryString.escape(
+      productName
+    )}))`
   )
   //   await page.screenshot({ path: 'example.png' })
   //   const acers = await page.evaluate(() => {
@@ -111,7 +113,7 @@ const shopeeProducts = async (req, res) => {
   //   height: 667,
   //   isMobile: true,
   // })
-  const productName = req.query.product
+  const { product: productName, limit, order, newest } = req.query
 
   // await page.goto(
   //   `https://shopee.vn/search?keyword=${queryString.escape(productName)}`
@@ -124,7 +126,7 @@ const shopeeProducts = async (req, res) => {
   // await page.waitForTimeout(9000)
   // const datas = await getData(page)
   // // await browser.close()
-  const result = await getData(productName)
+  const result = await getData(productName, limit, newest, order)
   res.json(result)
 }
 // async function getData(page) {
