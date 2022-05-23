@@ -68,7 +68,7 @@ const {
  *     summary: gets all product in lazada
  *     tags: [Products]
  *     parameters:
- *        - in : query
+ *       - in : query
  *         name: product
  *         description: name of product
  *         schema:
