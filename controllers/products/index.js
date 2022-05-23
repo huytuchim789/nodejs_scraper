@@ -10,6 +10,7 @@ const getProducts = async (req, res) => {
   const productName = req.query.product
   const browser = await puppeteer.launch({
     headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
   const page = await browser.newPage()
   await page.goto(
@@ -55,7 +56,7 @@ const getProducts = async (req, res) => {
 const tikiProducts = async (req, res) => {
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--disable-setuid-sandbox'],
+    args: ['--disable-setuid-sandbox', '--no-sandbox'],
     ignoreHTTPSErrors: true,
   })
   const page = await browser.newPage()
@@ -95,7 +96,7 @@ const tikiProducts = async (req, res) => {
 const shopeeProducts = async (req, res) => {
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--disable-setuid-sandbox'],
+    args: ['--disable-setuid-sandbox', '--no-sandbox'],
     ignoreHTTPSErrors: true,
   })
   const page = await browser.newPage()
