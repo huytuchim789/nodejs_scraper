@@ -88,6 +88,45 @@ const {
  *       400:
  *         description: []
  */
+/**
+ * @swagger
+ * products/shopee:
+ *   get:
+ *     summary: gets all product in shopee
+ *     tags: [Products]
+ *     parameters:
+ *       - in : query
+ *         name: product
+ *         description: name of product
+ *         schema:
+ *           type: string
+ *         required: true
+ *       - in : query
+ *         name: newest
+ *         description: number of newest
+ *         schema:
+ *           type: num
+ *         required: false
+ *       - in : query
+ *         name: limit
+ *         description: limit products
+ *         schema:
+ *           type: num
+ *         required: false
+ *       - in : query
+ *         name: order
+ *         description: desc or asc
+ *         schema:
+ *           type: string
+ *         required: false
+ *     responses:
+ *       200:
+ *         description: products in array
+ *         content:
+ *           application/json:
+ *       400:
+ *         description: []
+ */
 
 // router.use('/products', () => {})
 router.route('/gear').get(getProducts)
