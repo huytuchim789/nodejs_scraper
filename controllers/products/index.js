@@ -54,42 +54,33 @@ const getProducts = async (req, res) => {
 }
 
 const tikiProducts = async (req, res) => {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--disable-setuid-sandbox', '--no-sandbox'],
-    ignoreHTTPSErrors: true,
-  })
-  const page = await browser.newPage()
-  //We use here page.emulate so no more need to set the viewport separately
-  //await page.setViewport({ width: 1280, height: 800 })
-  await page.emulate(iPhonex)
-  // await page.setUserAgent(
-  //   '--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_1 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Mobile/14A403 Safari/602.1'
-  // )
-  // await page.setUserAgent(
-  //   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4950.0 Safari/537.36'
-  // )
-  // await page.setViewport({
-  //   width: 375,
-  //   height: 667,
-  //   isMobile: true,
-  // })
-  const productName = req.query.product
-
-  await page.goto(`https://tiki.vn/search?q=${queryString.escape(productName)}`)
-  // await page.screenshot({ path: 'cherchertech-iphoneX.png' })
-  await scrollPageToBottom(page, {
-    size: 500,
-    delay: 600,
-  })
-
-  // await scroll(page)
-  // const datas = await getData(page)
-  // // await browser.close()
-  const datas = await getDataTiki(page)
-  // browser.close()
-
-  res.json(datas)
+  const { product: productName, pageNum } = req.query
+  let datas = []
+  try {
+    datas = await axios.get(
+      `https://tiki.vn/api/v2/products?limit=12&include=advertisement&is_mweb=1&aggregations=2&trackity_id=cda32fce-179f-7e29-06ba-dd484bd13853&q=${queryString.escape(
+        productName
+      )}&page=${pageNum}`
+    )
+  } catch (error) {
+    console.log(error)
+  }
+  res.json(datas.data)
+}
+const lazadaProducts = async (req, res) => {
+  const { product: productName, pageNum } = req.query
+  let datas = []
+  try {
+    datas = await axios.get(
+      `https://www.lazada.vn/catalog/?_keyori=ss&ajax=true&page=${pageNum}&q=${productName}&spm=a2o4n.home.search.go.1905e182DKMSgt`
+    )
+    datas.data.mainInfo.last_page = Math.round(
+      datas.data.mainInfo.totalResults / datas.data.mainInfo.pageSize
+    )
+  } catch (error) {
+    console.log(error)
+  }
+  res.json(datas.data)
 }
 const shopeeProducts = async (req, res) => {
   const browser = await puppeteer.launch({
@@ -337,4 +328,4 @@ async function scroll(page) {
     })
   })
 }
-module.exports = { getProducts, shopeeProducts, tikiProducts }
+module.exports = { getProducts, shopeeProducts, tikiProducts, lazadaProducts }

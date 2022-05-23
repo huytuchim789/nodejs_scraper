@@ -5,6 +5,7 @@ const {
   getProducts,
   shopeeProducts,
   tikiProducts,
+  lazadaProducts,
 } = require('./../../controllers/products')
 /**
  * @swagger
@@ -45,6 +46,12 @@ const {
  *         description: name of product
  *         schema:
  *           type: string
+ *         required: true
+ *       - in : query
+ *         name: pageNum
+ *         description: page in pagination
+ *         schema:
+ *           type: num
  *         required: true
  *     responses:
  *       200:
@@ -97,4 +104,5 @@ const {
 router.route('/gear').get(getProducts)
 router.route('/shopee').get(shopeeProducts)
 router.route('/tiki').get(tikiProducts)
+router.route('/lazada').get(lazadaProducts)
 module.exports = router
