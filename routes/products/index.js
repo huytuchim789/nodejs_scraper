@@ -63,34 +63,23 @@ const {
  */
 /**
  * @swagger
- * products/shopee:
+ * products/lazada:
  *   get:
- *     summary: gets all product in shopees
+ *     summary: gets all product in lazada
  *     tags: [Products]
  *     parameters:
- *       - in : query
+ *        - in : query
  *         name: product
  *         description: name of product
  *         schema:
  *           type: string
  *         required: true
  *       - in : query
- *         name: limit
- *         description: limit products
+ *         name: pageNum
+ *         description: page in pagination
  *         schema:
- *           type: number
- *         required: false
- *       - in : query
- *         name: newest
- *         description: name of product
- *         schema:
- *           type: number
- *       - in : query
- *         name: order
- *         description: name of product
- *         schema:
- *           type: string
- *         required: false
+ *           type: num
+ *         required: true
  *     responses:
  *       200:
  *         description: products in array
