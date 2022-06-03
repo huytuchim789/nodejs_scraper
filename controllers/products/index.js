@@ -62,10 +62,32 @@ const tikiProducts = async (req, res) => {
         productName
       )}&page=${pageNum}`
     )
+    console.log()
+    datas = datas.data.data.map((e) => {
+      const {
+        name,
+        url_path,
+        price,
+        discount_rate: discount,
+        rating_everage,
+        quantity_sold,
+        thumbnail_url: image,
+      } = e
+      return {
+        name,
+        url_path,
+        price,
+        discount,
+        rating_everage,
+        quantity_sold,
+        image,
+      }
+    })
   } catch (error) {
     console.log(error)
   }
-  res.json(datas.data)
+
+  res.json(datas)
 }
 const lazadaProducts = async (req, res) => {
   const { product: productName, pageNum } = req.query
@@ -212,7 +234,26 @@ async function getData(productName, limit, newest, order) {
       const data = await axios.get(
         `https://shopee.vn/api/v4/item/get?itemid=${datas[i].item_basic.itemid}&shopid=${datas[i].item_basic.shopid}`
       )
-      result.push(data.data)
+      let {
+        name,
+        price,
+        localtion,
+        historical_sold,
+        shop_location,
+        image,
+        item_rating,
+        discount,
+      } = data.data.data
+      result.push({
+        name,
+        price,
+        localtion,
+        historical_sold,
+        shop_location,
+        image,
+        discount,
+        item_rating,
+      })
       console.log(data.data)
     } catch (error) {
       console.log(error)
