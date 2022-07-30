@@ -12,45 +12,52 @@ const getProducts = async (req, res) => {
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
   })
-  const page = await browser.newPage()
-  await page.goto(
-    `https://gearvn.com/search?type=product&q=filter=((title%3Aproduct%20adjacent%20${queryString.escape(
-      productName
-    )}))`
-  )
-  //   await page.screenshot({ path: 'example.png' })
-  //   const acers = await page.evaluate(() => {
-  //     return Array.from(document.querySelectorAll('.product-row'))
-  //   })
-  const acers = await page.$$('.product-row')
-  const laptops = []
-  for (let i = 0; i < acers.length; i++) {
-    const img = await acers[i].$eval(
-      'img',
-      (i) => 'https:' + i.getAttribute('src')
+  try {
+    const page = await browser.newPage()
+    await page.goto(
+      `https://gearvn.com/search?type=product&q=filter=((title%3Aproduct%20adjacent%20${queryString.escape(
+        productName
+      )}))`
     )
-    const name = await acers[i].$eval('.product-row-name', (a) => a.textContent)
-    let original_price = null
-    try {
-      original_price = await acers[i].$eval(
-        '.product-row-price > del',
+    //   await page.screenshot({ path: 'example.png' })
+    //   const acers = await page.evaluate(() => {
+    //     return Array.from(document.querySelectorAll('.product-row'))
+    //   })
+    const acers = await page.$$('.product-row')
+    const laptops = []
+    for (let i = 0; i < acers.length; i++) {
+      const img = await acers[i].$eval(
+        'img',
+        (i) => 'https:' + i.getAttribute('src')
+      )
+      const name = await acers[i].$eval(
+        '.product-row-name',
         (a) => a.textContent
       )
-    } catch (error) {}
-    const price = await acers[i].$eval(
-      '.product-row-sale',
-      (a) => a.textContent
-    )
-    let discount = '0%'
-    try {
-      discount = await acers[i].$eval(
-        'div.new-product-percent',
-        (c) => c.textContent
+      let original_price = null
+      try {
+        original_price = await acers[i].$eval(
+          '.product-row-price > del',
+          (a) => a.textContent
+        )
+      } catch (error) {}
+      const price = await acers[i].$eval(
+        '.product-row-sale',
+        (a) => a.textContent
       )
-    } catch (error) {}
-    laptops.push({ img, name, original_price, price, discount })
+      let discount = '0%'
+      try {
+        discount = await acers[i].$eval(
+          'div.new-product-percent',
+          (c) => c.textContent
+        )
+      } catch (error) {}
+      laptops.push({ img, name, original_price, price, discount })
+    }
+    res.json(laptops)
+  } catch (error) {
+    res.json(error)
   }
-  res.json(laptops)
 }
 
 const tikiProducts = async (req, res) => {
@@ -60,7 +67,7 @@ const tikiProducts = async (req, res) => {
     datas = await axios.get(
       `https://tiki.vn/api/v2/products?limit=12&include=advertisement&is_mweb=1&aggregations=2&trackity_id=cda32fce-179f-7e29-06ba-dd484bd13853&q=${queryString.escape(
         productName
-      )}&page=${pageNum}`
+      )}`
     )
     console.log(datas)
     // res.json(datas.data.data);
@@ -107,7 +114,6 @@ const lazadaProducts = async (req, res) => {
   } catch (error) {
     console.log(error)
   }
-  console.log(datas.data.mods?.listItems)
   const result = datas.data.mods?.listItems.map((pro) => {
     return {
       id: pro.nid,
@@ -124,41 +130,45 @@ const lazadaProducts = async (req, res) => {
   res.json(result)
 }
 const shopeeProducts = async (req, res) => {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--disable-setuid-sandbox', '--no-sandbox'],
-    ignoreHTTPSErrors: true,
-  })
-  const page = await browser.newPage()
-  //We use here page.emulate so no more need to set the viewport separately
-  //await page.setViewport({ width: 1280, height: 800 })
-  await page.emulate(iPhonex)
-  // await page.setUserAgent(
-  //   '--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_1 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Mobile/14A403 Safari/602.1'
-  // )
-  // await page.setUserAgent(
-  //   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4950.0 Safari/537.36'
-  // )
-  // await page.setViewport({
-  //   width: 375,
-  //   height: 667,
-  //   isMobile: true,
-  // })
-  const { product: productName, limit, order, newest } = req.query
+  try {
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--disable-setuid-sandbox', '--no-sandbox'],
+      ignoreHTTPSErrors: true,
+    })
+    const page = await browser.newPage()
+    //We use here page.emulate so no more need to set the viewport separately
+    //await page.setViewport({ width: 1280, height: 800 })
+    await page.emulate(iPhonex)
+    // await page.setUserAgent(
+    //   '--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_1 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Mobile/14A403 Safari/602.1'
+    // )
+    // await page.setUserAgent(
+    //   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4950.0 Safari/537.36'
+    // )
+    // await page.setViewport({
+    //   width: 375,
+    //   height: 667,
+    //   isMobile: true,
+    // })
+    const { product: productName, limit, order, newest } = req.query
 
-  // await page.goto(
-  //   `https://shopee.vn/search?keyword=${queryString.escape(productName)}`
-  // )
-  // await page.screenshot({ path: 'cherchertech-iphoneX.png' })
+    // await page.goto(
+    //   `https://shopee.vn/search?keyword=${queryString.escape(productName)}`
+    // )
+    // await page.screenshot({ path: 'cherchertech-iphoneX.png' })
 
-  // await scroll(page)
+    // await scroll(page)
 
-  // // await autoScroll(page)
-  // await page.waitForTimeout(9000)
-  // const datas = await getData(page)
-  // // await browser.close()
-  const result = await getData(productName, limit, newest, order)
-  res.json(result)
+    // // await autoScroll(page)
+    // await page.waitForTimeout(9000)
+    // const datas = await getData(page)
+    // // await browser.close()
+    const result = await getData(productName, limit, newest, order)
+    res.json(result)
+  } catch (error) {
+    ré.json(error)
+  }
 }
 // async function getData(page) {
 //   const items = await page.$$('.item-card-list__item-card-wrapper')
