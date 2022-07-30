@@ -48,7 +48,7 @@ const {
  *           type: string
  *         required: true
  *       - in : query
- *         name: pageNum
+ *         name: page
  *         description: page in pagination
  *         schema:
  *           type: num
@@ -75,7 +75,7 @@ const {
  *           type: string
  *         required: true
  *       - in : query
- *         name: pageNum
+ *         name: page
  *         description: page in pagination
  *         schema:
  *           type: num

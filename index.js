@@ -1,10 +1,12 @@
 const express = require('express')
 const app = express()
 const swaggerUI = require('swagger-ui-express')
+const cors = require('cors')
 const swaggerJsDoc = require('swagger-jsdoc')
 // ;(async () => {
 const PORT = process.env.PORT || 3000
 // })()
+app.use(cors())
 app.use('/products', require('./routes/products'))
 app.use('/product', require('./routes/product'))
 
