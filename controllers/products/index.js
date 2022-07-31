@@ -4,8 +4,22 @@ const iPhonex = devices['iPhone X']
 const { scrollPageToBottom } = require('puppeteer-autoscroll-down')
 const { getPrice } = require('./../../services/getPrices')
 const queryString = require('querystring')
+const Redis = require('redis')
 const axios = require('axios').default
+const redisClient = Redis.createClient({
+  url: 'redis://localhost:6378',
+})
+const DEFAULT_EXPIRATION = 3600
+redisClient.on('error', (err) => console.log('Redis Client Error', err))
 
+redisClient
+  .connect()
+  .then(() => {
+    console.log('success connected redis')
+  })
+  .catch((e) => {
+    console.log(e)
+  })
 const getProducts = async (req, res) => {
   const productName = req.query.product
   const browser = await puppeteer.launch({
@@ -63,71 +77,83 @@ const getProducts = async (req, res) => {
 const tikiProducts = async (req, res) => {
   const { product: productName, page: pageNum } = req.query
   let datas = []
-  try {
-    datas = await axios.get(
-      `https://tiki.vn/api/v2/products?limit=12&include=advertisement&is_mweb=1&aggregations=2&trackity_id=cda32fce-179f-7e29-06ba-dd484bd13853&q=${queryString.escape(
-        productName
-      )}`
-    )
-    console.log(datas)
-    // res.json(datas.data.data);
-    datas = datas.data.data.map((e) => {
-      const {
-        id,
-        name,
-        url_path,
-        price,
-        discount_rate,
-        review_count: review,
-        rating_average,
-        quantity_sold,
-        thumbnail_url: image,
-      } = e
-      return {
-        id,
-        name,
-        itemUrl: url_path,
-        price,
-        review,
-        discount: discount_rate,
-        rating: rating_average,
-        quantity_sold: quantity_sold?.value || 0,
-        image,
+  datas = await getOrSetCache(
+    `https://tiki.vn/api/v2/products?limit=12&include=advertisement&is_mweb=1&aggregations=2&trackity_id=cda32fce-179f-7e29-06ba-dd484bd13853&q=${queryString.escape(
+      productName
+    )}`,
+    async () => {
+      try {
+        let datas = await axios.get(
+          `https://tiki.vn/api/v2/products?limit=12&include=advertisement&is_mweb=1&aggregations=2&trackity_id=cda32fce-179f-7e29-06ba-dd484bd13853&q=${queryString.escape(
+            productName
+          )}`
+        )
+        // res.json(datas.data.data);
+        datas = datas.data.data.map((e) => {
+          const {
+            id,
+            name,
+            url_path,
+            price,
+            discount_rate,
+            review_count: review,
+            rating_average,
+            quantity_sold,
+            thumbnail_url: image,
+          } = e
+          return {
+            id,
+            name,
+            itemUrl: url_path,
+            price,
+            review,
+            discount: discount_rate,
+            rating: rating_average,
+            quantity_sold: quantity_sold?.value || 0,
+            image,
+          }
+        })
+        return datas
+      } catch (error) {
+        console.log('error: ', error)
       }
-    })
-  } catch (error) {
-    console.log(error)
-  }
-
+    }
+  )
   res.json(datas)
 }
 const lazadaProducts = async (req, res) => {
   const { product: productName, page: pageNum } = req.query
   let datas = []
-  try {
-    datas = await axios.get(
-      `https://www.lazada.vn/catalog/?_keyori=ss&ajax=true&page=${pageNum}&q=${productName}&spm=a2o4n.home.search.go.1905e182DKMSgt`
-    )
-    datas.data.mainInfo.last_page = Math.round(
-      datas.data.mainInfo.totalResults / datas.data.mainInfo.pageSize
-    )
-  } catch (error) {
-    console.log(error)
-  }
-  const result = datas.data.mods?.listItems.map((pro) => {
-    return {
-      id: pro.nid,
-      name: pro.name,
-      price: pro.price,
-      rating: pro.ratingScore,
-      review: pro.review,
-      image: pro.image,
-      location: pro.location,
-      itemUrl: pro.itemUrl,
-      discount: pro.discount || '0',
+  datas = await getOrSetCache(
+    `https://www.lazada.vn/catalog/?_keyori=ss&ajax=true&page=${pageNum}&q=${productName}&spm=a2o4n.home.search.go.1905e182DKMSgt`,
+    async () => {
+      try {
+        let datas = await axios.get(
+          `https://www.lazada.vn/catalog/?_keyori=ss&ajax=true&page=${pageNum}&q=${productName}&spm=a2o4n.home.search.go.1905e182DKMSgt`
+        )
+        datas.data.mainInfo.last_page = Math.round(
+          datas.data.mainInfo.totalResults / datas.data.mainInfo.pageSize
+        )
+        const result = datas.data.mods?.listItems.map((pro) => {
+          return {
+            id: pro.nid,
+            name: pro.name,
+            price: pro.price,
+            rating: pro.ratingScore,
+            review: pro.review,
+            image: pro.image,
+            location: pro.location,
+            itemUrl: pro.itemUrl,
+            discount: pro.discount || '0',
+          }
+        })
+        return result
+      } catch (error) {
+        console.log(error)
+      }
     }
-  })
-  res.json(result)
+  )
+  res.json(datas)
 }
 const shopeeProducts = async (req, res) => {
   try {
@@ -164,10 +190,16 @@ const shopeeProducts = async (req, res) => {
     // await page.waitForTimeout(9000)
     // const datas = await getData(page)
     // // await browser.close()
-    const result = await getData(productName, limit, newest, order)
-    res.json(result)
+    const datas = await getOrSetCache(
+      `https://shopee.vn/api/v4/search/search_items?by=relevancy&keyword=${productName}&limit=${limit}&newest=${newest}&order=${order}&page_type=search&scenario=PAGE_CATEGORY_SEARCH&version=2`,
+      async () => {
+        const result = await getData(productName, limit, newest, order)
+        return result
+      }
+    )
+    res.json(datas)
   } catch (error) {
-    ré.json(error)
+    res.json(error)
   }
 }
 // async function getData(page) {
@@ -391,25 +423,28 @@ async function getDataTiki(page) {
   }
   return datas
 }
-async function scroll(page) {
-  await page.evaluate(async () => {
-    await new Promise((resolve) => {
-      // Adjust as necessary
-      const y = 500,
-        speed = 500
-      let heightScrolled = 0
-
-      let intervalID = setInterval(() => {
-        window.scrollBy(0, y)
-        heightScrolled += y
-        if (heightScrolled >= document.body.scrollHeight) {
-          resolve()
+function getOrSetCache(key, callback) {
+  return new Promise(async (res, rej) => {
+    try {
+      const data = await redisClient.get(key)
+      console.log(data)
+      if (!data) {
+        try {
+          const freshData = await callback()
+          await redisClient.setEx(
+            key,
+            DEFAULT_EXPIRATION,
+            JSON.stringify(freshData)
+          )
+          res(freshData)
+        } catch (error) {
+          rej(error)
         }
-      }, speed)
-      setTimeout(function () {
-        clearInterval(intervalID)
-      }, 10000) // stop it after 10second
-    })
+      }
+      res(JSON.parse(data))
+    } catch (error) {
+      rej(error)
+    }
   })
 }
 module.exports = { getProducts, shopeeProducts, tikiProducts, lazadaProducts }

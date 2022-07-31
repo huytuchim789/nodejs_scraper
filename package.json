@@ -16,6 +16,7 @@
     "nodemon": "^2.0.16",
     "puppeteer": "^13.7.0",
     "puppeteer-autoscroll-down": "^1.1.1",
+    "redis": "^4.2.0",
     "swagger-jsdoc": "^6.2.1",
     "swagger-ui-express": "^4.4.0"
   }
