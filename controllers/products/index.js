@@ -6,6 +6,8 @@ const { getPrice } = require('./../../services/getPrices')
 const queryString = require('querystring')
 const Redis = require('redis')
 const axios = require('axios').default
+const TIKI_URL = 'https://tiki.vn/'
+const LAZADA_URL = 'https://www.lazada.vn/'
 const redisClient = Redis.createClient({
   url: 'redis://localhost:6378',
 })
@@ -104,10 +106,10 @@ const tikiProducts = async (req, res) => {
           return {
             id,
             name,
-            itemUrl: url_path,
+            itemUrl: TIKI_URL + url_path,
             price,
             review,
-            discount: discount_rate,
+            discount: discount_rate ? discount_rate + '%' : '0%',
             rating: rating_average,
             quantity_sold: quantity_sold?.value || 0,
             image,
@@ -138,13 +140,15 @@ const lazadaProducts = async (req, res) => {
           return {
             id: pro.nid,
             name: pro.name,
-            price: pro.price,
-            rating: pro.ratingScore,
-            review: pro.review,
+            price: pro.price ? parseFloat(pro.price) : 0,
+            rating: pro.ratingScore ? parseFloat(pro.ratingScore) : 0,
+            review: pro.review ? parseInt(pro.review) : 0,
             image: pro.image,
             location: pro.location,
             itemUrl: pro.itemUrl,
-            discount: pro.discount || '0',
+            discount: pro.discount
+              ? pro.discount.replaceAll('off', '').replaceAll('-', '')
+              : '0%',
           }
         })
         return result
@@ -166,30 +170,8 @@ const shopeeProducts = async (req, res) => {
     //We use here page.emulate so no more need to set the viewport separately
     //await page.setViewport({ width: 1280, height: 800 })
     await page.emulate(iPhonex)
-    // await page.setUserAgent(
-    //   '--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 10_0_1 like Mac OS X) AppleWebKit/602.1.50 (KHTML, like Gecko) Version/10.0 Mobile/14A403 Safari/602.1'
-    // )
-    // await page.setUserAgent(
-    //   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4950.0 Safari/537.36'
-    // )
-    // await page.setViewport({
-    //   width: 375,
-    //   height: 667,
-    //   isMobile: true,
-    // })
+
     const { product: productName, limit, order, newest } = req.query
-
-    // await page.goto(
-    //   `https://shopee.vn/search?keyword=${queryString.escape(productName)}`
-    // )
-    // await page.screenshot({ path: 'cherchertech-iphoneX.png' })
-
-    // await scroll(page)
-
-    // // await autoScroll(page)
-    // await page.waitForTimeout(9000)
-    // const datas = await getData(page)
-    // // await browser.close()
     const datas = await getOrSetCache(
       `https://shopee.vn/api/v4/search/search_items?by=relevancy&keyword=${productName}&limit=${limit}&newest=${newest}&order=${order}&page_type=search&scenario=PAGE_CATEGORY_SEARCH&version=2`,
       async () => {
@@ -372,7 +354,7 @@ async function getDataTiki(page) {
       // // await elements[k].waitForSelector('a', { visible: true })
       // try {
       //   link = await elements[k].$eval('a', (c) => {
-      //     const TIKI_URL = 'https://tiki.vn/'
+      //     const TIKI_URL='https://tiki.vn/'
       //     return TIKI_URL + c.getAttribute('href')
       //   })
       // } catch (err) {}

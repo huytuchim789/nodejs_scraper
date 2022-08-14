@@ -7,8 +7,8 @@ const swaggerJsDoc = require('swagger-jsdoc')
 const PORT = process.env.PORT || 3000
 // })()
 app.use(cors())
-app.use('/products', require('./routes/products'))
-app.use('/product', require('./routes/product'))
+app.use('/api/v1/products', require('./routes/products'))
+app.use('/api/v1/product', require('./routes/product'))
 
 const options = {
   definition: {
